@@ -326,8 +326,11 @@ sudo apt install spectroscope</code></pre>
         <strong>amd64 only, for now.</strong> There is no arm64 package yet. The
         <code>arm64</code> index exists and is covered by the signature, but it is
         empty, so apt on an arm64 machine will add this source without error and
-        then find nothing to install. On Apple silicon, take the notarized dmg or
-        the homebrew cask below.
+        then find nothing to install. There is no arm64 desktop kit either. On
+        arm64 Linux the way in is the CLI zip
+        (<code>spectro-0.5.0.zip</code>) or the plain
+        <code>spectro-server-0.5.0.jar</code>: both run on any JDK 21, and both
+        are attached to the same release.
       </div>
 
       <p class="sec-note">
@@ -478,12 +481,28 @@ docker run --rm -v <span class="s">"$PWD"</span>:/srv/apt:ro debian:12 sh /srv/a
       <p class="kicker">other doors</p>
       <h2>other ways to get spectroscope</h2>
       <p>
-        apt is the Linux door. The packaged desktop builds are macOS on Apple
-        silicon, and they carry their own JRE and their own
-        <code>llama-server</code>, so the machine needs no Java and no Homebrew.
+        apt is one Linux door, and it wants a Debian or an Ubuntu on x86_64.
+        The AppImage is the other Linux door. The homebrew cask and the dmg are
+        macOS on Apple silicon. Every packaged desktop build carries its own JRE
+        and its own <code>llama-server</code>, so the machine needs no Java and
+        no Homebrew. The CLI zip and the plain server jar are not desktop
+        builds, and they run anywhere a JDK 21 does.
       </p>
 
       <div class="grid3">
+        <div class="card">
+          <h4><i style="background: var(--sp-violet)"></i>AppImage</h4>
+          <p>The same desktop build as the deb, in one executable file, for the
+          x86_64 Linux distributions that do not use apt. Nothing installs: mark
+          it executable and run it.</p>
+<pre><code>chmod +x spectroscope-0.5.0-x86_64.AppImage
+./spectroscope-0.5.0-x86_64.AppImage</code></pre>
+          <p>Nothing in it is signed, because Linux has no gate to pass. It does
+          carry a published checksum: <code>SHA256SUMS.linux</code> sits beside it
+          on the release and covers this file and the deb.</p>
+<pre><code>sha256sum -c SHA256SUMS.linux --ignore-missing</code></pre>
+          <p>built and smoke-booted on a Linux runner by this project&rsquo;s own CI</p>
+        </div>
         <div class="card">
           <h4><i style="background: var(--sp-teal)"></i>homebrew</h4>
           <p>One command, and <code>brew upgrade</code> keeps it current. The cask
@@ -499,6 +518,9 @@ docker run --rm -v <span class="s">"$PWD"</span>:/srv/apt:ro debian:12 sh /srv/a
           <p><a href="https://github.com/spectroscope/spectroscope/releases/latest">the latest release</a>
           carries the dmg, the CLI zip and the plain server jar</p>
         </div>
+      </div>
+
+      <div class="grid3">
         <div class="card">
           <h4><i style="background: var(--sp-ocean)"></i>from source</h4>
           <p>Clone and go. The <code>./spectro</code> launcher resolves a JDK 21+
@@ -506,9 +528,6 @@ docker run --rm -v <span class="s">"$PWD"</span>:/srv/apt:ro debian:12 sh /srv/a
 <pre><code>git clone https://github.com/spectroscope/spectroscope.git
 cd spectroscope &amp;&amp; ./spectro web start</code></pre>
         </div>
-      </div>
-
-      <div class="grid2">
         <div class="card">
           <h4><i style="background: var(--sp-violet)"></i>the release the pool points at</h4>
           <p>The deb this repository indexes is attached to

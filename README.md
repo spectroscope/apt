@@ -13,96 +13,97 @@ https://apt.spectroscope.dev
 ```
 
 That name is a Cloudflare Worker (`wrangler.jsonc`, `src/worker.js`): it serves
-this tree through the assets binding and answers `pool/` with a redirect.
-**It is not deployed yet.** The worker, its config and the pool map are
-committed here, but connecting this repository to a Worker and attaching the
-custom domain are dashboard steps, so the address does not resolve today. The
-same indexes are already live over GitHub Pages at
-`https://spectroscope.github.io/apt`, which serves everything except the pool.
+this tree through the assets binding and answers `pool/` with a redirect, and it
+is live. The same indexes are also served over GitHub Pages at
+`https://spectroscope.github.io/apt`, which carries everything except the pool.
 
-## Der Stand, gemessen am 31.07.2026 (abends)
+## Status, measured 2026-07-31
 
-**Das Repo ist scharf.** `https://apt.spectroscope.dev` liefert die Indexe, den
-Schlüssel und die Pool-Umleitung; die zwei dokumentierten Zeilen installieren in
-einem frischen Container `spectroscope 0.5.0`, auf Debian 12 (apt 2.6.1) und auf
-Ubuntu 24.04 (apt 2.8.3), jeweils mit Exit 0 und ohne eine Signatur-Warnung.
-`/usr/bin/spectroscope` liegt danach über update-alternatives auf dem PATH,
-`dpkg -V` schweigt, und `~/.spectro` überlebt ein `apt remove` unverändert.
+**The repository is live.** `https://apt.spectroscope.dev` serves the indexes,
+the key and the pool redirect. The documented install lines bring
+`spectroscope 0.5.0` into a clean container on Debian 12 (apt 2.6.1) and on
+Ubuntu 24.04 (apt 2.8.3), both exit 0, neither with a signature warning.
+`/usr/bin/spectroscope` is on PATH afterwards through update-alternatives,
+`dpkg -V` stays silent, and `~/.spectro` survives an `apt remove` unchanged.
 
-Im Pool liegt genau ein Paket: `spectroscope_0.5.0_amd64.deb`, 187306672 Bytes
-(178,63 MiB), sha256 `7f25fd52...df62f`, umgeleitet auf das Asset des
-v0.5.0-Releases. `amd64` ist die einzige ausgelieferte Architektur; für arm64
-nimmt apt die Quelle ohne Fehler auf und findet dann nichts.
+The pool holds exactly one package: `spectroscope_0.5.0_amd64.deb`, 187306672
+bytes (178.63 MiB), sha256 `7f25fd52...df62f`, redirected to the asset of the
+v0.5.0 release. `amd64` is the only architecture shipped; on arm64 apt takes
+this source without error and then finds nothing to install.
 
-**Der Pool liegt nicht in diesem Repo, und er kann es auch nicht.** GitHub
-weist jede Datei über 100 MB ab (gemessen beim ersten Push: `GH001 ... is
-178.63 MB; this exceeds GitHub's file size limit of 100.00 MB`), und Git LFS
-hilft nicht, weil Pages den Zeiger ausliefert statt des Objekts. Dass die
-Kette sonst trägt, ist getrennt bewiesen: gegen denselben Baum lokal
-ausgeliefert installieren debian 12 und ubuntu 24.04 das Paket sauber, und drei
-Manipulationsversuche (gekipptes Byte, entfernte Signatur, fremder Schlüssel)
-werden von apt abgewiesen.
+**If apt is not your route.** The same v0.5.0 release carries
+`spectroscope-0.5.0-x86_64.AppImage` for x86_64 distributions that do not use
+apt, a signed and notarized `spectroscope-0.5.0-arm64.dmg` for macOS on Apple
+silicon (also installable as `brew install --cask
+spectroscope/tap/spectroscope`), and the CLI zip and the server jar, which need
+a JDK 21 and run anywhere. There is no arm64 Linux package and no Windows
+package: on arm64 Linux, run the CLI or the server jar.
 
-## Der gewählte Aufbau: Indexe hier, Pakete am Release
+**The pool is not in this repository, and it cannot be.** GitHub refuses any
+file over 100 MB (measured on the first push: `GH001 ... is 178.63 MB; this
+exceeds GitHub's file size limit of 100.00 MB`), and Git LFS does not help,
+because Pages serves the pointer instead of the object. That the chain holds
+otherwise is proven separately: served locally against this same tree, debian 12
+and ubuntu 24.04 install the package cleanly, and three tampering attempts (a
+flipped byte, a stripped signature, a foreign key) are refused by apt.
 
-Gebaut ist Weg 1 der beiden, die hier vorher zur Wahl standen:
-**Release-Assets plus Umleitung**, kein Objektspeicher.
+## The shape that was built: indexes here, packages at the release
 
-`apt.spectroscope.dev` ist ein Cloudflare Worker nach demselben Muster wie
-spectroscope.ai und spectroscope.dev — Assets first, kein Build-Schritt. Alles
-außer `pool/` geht unverändert aus der Assets-Bindung raus; das sind elf
-Dateien, die größte rund 17 KB (gemessen 31.07.2026). Ein Paket paßt da nicht
-hinein: der deb ist 187306672 Bytes, also 178,63 MiB, und ein statisches Asset
-darf bei Cloudflare **25 MiB** groß sein. Also beantwortet der Worker `pool/`
-selbst, mit einem **302 auf die URL, die die Bytes wirklich hält**.
+Of the two routes that stood to choice, this is route 1: **release assets plus a
+redirect**, no object store.
 
-Welche URL das ist, wird **nie geraten**. `pool-map.json` nennt jeden Dateinamen
-und sein Ziel; ein Name, der dort fehlt, bekommt vom Worker einen `404` mit
-genau dieser Auskunft, statt einer Umleitung in ein fremdes Nichts.
-`scripts/update-repo.sh` schreibt den Eintrag beim Poolen und verweigert den
-Dienst ohne `--url` — ein signierter Index, der eine Datei verspricht, die
-niemand ausliefert, ist der Fehler, gegen den diese ganze Schicht gebaut ist.
+`apt.spectroscope.dev` is a Cloudflare Worker on the same pattern as
+spectroscope.ai and spectroscope.dev, assets first, no build step. Everything
+except `pool/` leaves the assets binding untouched, which is eleven files, the
+largest around 17 KB (measured 2026-07-31). A package does not fit in there: the
+deb is 187306672 bytes, so 178.63 MiB, and a static asset at Cloudflare may be
+**25 MiB**. So the worker answers `pool/` itself, with a **302 to the URL that
+really holds the bytes**.
 
-**Die Umleitung schwächt nichts ab.** apt vertraut einem Paket nicht wegen
-seiner Herkunft: es hasht die empfangenen Bytes gegen den SHA256 aus dem Index,
-und dieser Index hängt an der Signatur von `InRelease`, die apt gegen den einen
-per `signed-by` gepinnten Schlüssel prüft. Gemessen an debian 12 mit apt 2.6.1,
-sieben Läufe: über ein 302 hinweg installiert das Paket sauber (`apt-get install
-exit 0`), und ein Ziel, das denselben Dateinamen mit **einem gekippten Byte bei
-gleicher Länge** ausliefert, wird abgewiesen:
+Which URL that is, is **never guessed**. `pool-map.json` names every filename and
+its target; a name missing from it gets a `404` from the worker saying exactly
+that, instead of a redirect into somebody else's nothing.
+`scripts/update-repo.sh` writes the entry while pooling and refuses to run
+without `--url`. A signed index that promises a file nobody serves is the
+failure this whole layer is built against.
+
+**The redirect weakens nothing.** apt does not trust a package for where it came
+from: it hashes the received bytes against the SHA256 from the index, and that
+index hangs off the signature on `InRelease`, which apt checks against the one
+key pinned by `signed-by`. Measured on debian 12 with apt 2.6.1, seven runs:
+across a 302 the package installs cleanly (`apt-get install exit 0`), and a
+target that serves the same filename with **one flipped byte at the same
+length** is refused:
 
 ```
 E: Failed to fetch ...  Hash Sum mismatch
- - SHA256:7f25fd52...  (erwartet, aus dem signierten Index)
- - SHA256:d9d83680...  (empfangen)
+ - SHA256:7f25fd52...  (expected, from the signed index)
+ - SHA256:d9d83680...  (received)
 --- apt-get install exit=100 ---
 ```
 
-Nichts wurde ausgepackt, die Bytes landeten als `*.deb.FAILED` in Quarantäne.
-Eine falsche Größe fliegt noch früher auf (`File has unexpected size (38 !=
-187306672)`). Der Pool-Host ist damit von Bauart her unvertrauenswürdig: er
-kann eine Installation scheitern lassen, niemals eine stillschweigend
-verändern.
+Nothing was unpacked; the bytes landed in quarantine as `*.deb.FAILED`. A wrong
+size is caught even earlier (`File has unexpected size (38 != 187306672)`). By
+construction the pool host is untrusted: it can make an installation fail, never
+quietly change one.
 
-Zwei Dinge, die dabei gemessen wurden und den Betrieb betreffen: apt zeigt in
-seinen `Get:`-Zeilen die Adresse des Worker an, nicht die des Ziels — die
-Marken-URL ist die, die Anwender sehen. Nach einem Abbruch nimmt apt den
-Download aber **direkt beim Ziel** wieder auf (`Range: bytes=40000000-`), nicht
-noch einmal über den Worker; der Pool-Host muß also direkt erreichbar sein und
-sollte ein stabiles `Last-Modified` liefern.
+Two things measured along the way that affect operation. apt prints the worker's
+address in its `Get:` lines, not the target's, so the branded URL is the one
+users see. After an abort, though, apt resumes the download **straight at the
+target** (`Range: bytes=40000000-`), not through the worker again, so the pool
+host has to be reachable directly and should serve a stable `Last-Modified`.
 
-**Was passiert, wenn eine Datei keinen Eintrag hat.** Der Worker rät nie eine
-URL. Ein Dateiname ohne Eintrag in `pool-map.json` bekommt einen 404, der ihn
-benennt:
+**What happens when a file has no entry.** The worker never guesses a URL. A
+filename without an entry in `pool-map.json` gets a 404 that names it:
 
 ```
-404  no pool entry for <datei>.deb — see pool-map.json at the root of this repository
+404  no pool entry for <file>.deb — see pool-map.json at the root of this repository
 ```
 
-Das war bis zum 0.5.0-Release der reale Zustand des Repos: der Index trug einen
-Entwicklungs-Build, den kein Release auslieferte. Ein geratener Link wäre kein
-Fortschritt gewesen, sondern derselbe 404 eine Ebene später und mit falscher
-Schuldzuweisung. `scripts/update-repo.sh` verlangt deshalb `--url`.
+Until the 0.5.0 release that was the real state of this repository: the index
+carried a development build that no release shipped. A guessed link would not
+have been progress, only the same 404 one layer later and with the blame in the
+wrong place. That is why `scripts/update-repo.sh` insists on `--url`.
 
 ## Install
 
@@ -185,7 +186,9 @@ around. The CI workflow stamps that form itself for any build that is not a
 tag, and asserts the ordering before the artifact leaves the runner.
 
 `dists/stable/main/binary-arm64/Packages` exists and is covered by the
-signature, but it is empty. There is no arm64 package yet.
+signature, but it is empty. There is no arm64 package yet, and until there is,
+arm64 Linux runs the CLI zip or the server jar from the same release on a
+JDK 21.
 
 ## Verification
 
@@ -311,8 +314,8 @@ One command per new deb, and it needs the URL that will serve the file:
 
 ```sh
 scripts/update-repo.sh \
-  --url https://github.com/spectroscope/spectroscope/releases/download/v0.4.2/spectroscope_0.4.2_amd64.deb \
-  /path/to/spectroscope_0.4.2_amd64.deb
+  --url https://github.com/spectroscope/spectroscope/releases/download/v0.5.1/spectroscope_0.5.1_amd64.deb \
+  /path/to/spectroscope_0.5.1_amd64.deb
 ```
 
 It works inside a `debian:12` container, because the host is macOS and has no
@@ -358,36 +361,30 @@ The key home defaults to `~/.spectroscope-apt-key` and moves with
 recipe that mints it is `scripts/apt-signing-key.batch`. `.nojekyll` sits at
 the root for Pages, and `make-apt-repo.sh` re-creates it on every run.
 
-Then review the diff, commit, and push. The push is what publishes: Pages
-serves the indexes straight from the repository, and once the worker is
-connected, Workers Builds redeploys it on the same push. The deb itself never
+Then review the diff, commit, and push. The push is what publishes: Pages serves
+the indexes straight from the repository, and Workers Builds redeploys the
+worker on the same push. The deb itself never
 travels with that push — `pool/` is gitignored, because GitHub refuses a
 178.6 MiB file (`GH001`, measured). Uploading the package to its release is a
 separate, manual step, and until it is done the entry `update-repo.sh` just
 wrote points at a URL that answers 404.
 
-## Was noch offen ist
+## What is still open
 
-Drei Schritte, alle beim Owner, alle nach außen gerichtet:
+The three setup steps this section used to list are done: the repository is
+connected to a Worker, `apt.spectroscope.dev` is attached as a custom domain and
+resolves, and the deb hangs off the v0.5.0 release with its URL recorded in
+`pool-map.json`.
 
-1. **Das Repository mit einem Worker verbinden** (Workers & Pages → Settings →
-   Builds → Connect, Deploy-Kommando `npx wrangler deploy`, wie bei
-   spectroscope-dev). Der OAuth-Zugriff auf GitHub läßt sich in keiner
-   Konfigurationsdatei ausdrücken.
-2. **`apt.spectroscope.dev` als Custom Domain anhängen.** Cloudflare legt den
-   DNS-Eintrag an und stellt das Zertifikat selbst aus; Voraussetzung ist, daß
-   für den Namen noch kein CNAME in der Zone steht. Alternativ die
-   `routes`-Zeile aus `wrangler.jsonc` einkommentieren, dann erledigt das der
-   erste Deploy.
-3. **Den deb an ein Release oder Prerelease hängen** und die URL mit
-   `scripts/update-repo.sh --url` eintragen. Vorher gibt es nichts, worauf der
-   Worker umleiten könnte.
+What remains:
 
-Ungemessen bleibt bis zum ersten Deploy zweierlei: ob `.assetsignore` die
-Maschinerie (`src/`, `scripts/`, `pool/`, `.git`) wirklich aus dem Upload
-hält — die Datei ist dokumentiert und hat `.gitignore`-Format, aber geprüft ist
-sie hier nicht —, und ob GitHubs Release-CDN die `Range`-Anfragen beantwortet,
-mit denen apt einen abgebrochenen Download fortsetzt. Beides fällt beim ersten
-echten Lauf auf. Schlimmstenfalls landen ein paar Dateien mehr im
-ausgelieferten Baum; Schlüsselmaterial ist keines darunter, dafür sorgt die
-`.gitignore`.
+1. **No arm64 package.** The signed arm64 index is there and empty. Pooling one
+   needs an arm64 build first; there is none in the v0.5.0 release.
+2. **Two things this repository has never measured.** Whether `.assetsignore`
+   really keeps the machinery (`src/`, `scripts/`, `pool/`, `.git`) out of the
+   deployed tree: the file is documented and has `.gitignore` format, but no
+   check here confirms it. And whether GitHub's release CDN answers the `Range`
+   requests apt uses to resume an aborted download; a full download is proven,
+   a resumed one is not. Worst case for the first is a few extra files in the
+   served tree. No key material is among them, and `.gitignore` is what keeps it
+   that way.
