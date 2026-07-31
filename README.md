@@ -16,6 +16,37 @@ Every command below already uses that address, so they start working the moment
 Pages serves this repo. Right now it answers `404` (checked 2026-07-31, for the
 root, the key and `dists/stable/InRelease`).
 
+## Der Stand, gemessen am 31.07.2026
+
+Die Indexe sind **live**: `https://spectroscope.github.io/apt` liefert
+`dists/stable/InRelease`, `Packages` und `spectroscope.asc`, und ein frischer
+debian-12-Container akzeptiert sie mit den zwei dokumentierten Zeilen -
+`apt update` endet mit Exit 0, ohne eine einzige Signatur-Warnung, und
+`apt-cache policy spectroscope` nennt `Candidate: 0.4.2~dev.4d46480`.
+
+**Der Pool wird noch nicht ausgeliefert, und das ist bekannt.** GitHub weist
+jede Datei über 100 MB ab (gemessen beim ersten Push: `GH001 ... is 178.63 MB;
+this exceeds GitHub's file size limit of 100.00 MB`), und Git LFS hilft nicht,
+weil Pages den Zeiger ausliefert statt des Objekts. `apt install spectroscope`
+gegen die Live-URL endet deshalb heute mit `404 Not Found` auf den Pfad unter
+`pool/`. Dass die Kette sonst trägt, ist getrennt bewiesen: gegen denselben
+Baum lokal ausgeliefert installieren debian 12 und ubuntu 24.04 das Paket
+sauber, und drei Manipulationsversuche (gekipptes Byte, entfernte Signatur,
+fremder Schlüssel) werden von apt abgewiesen.
+
+**Offener Owner-Entscheid: wo der Pool liegt.** Zwei Wege, beide ohne neue
+Kosten:
+
+1. **GitHub-Release-Assets plus Umleitung.** Die Pakete hängen ohnehin am
+   Release (Schritt 8c des Playbooks). Ein kleiner Worker unter einer eigenen
+   Domain liefert `dists/` aus diesem Repo und leitet `pool/...` per 302 auf
+   das Release-Asset um; apt folgt Umleitungen.
+2. **Objektspeicher** (Cloudflare R2 oder vergleichbar) als Basis für den
+   ganzen Baum, dieses Repo bleibt die Quelle.
+
+Bis einer davon steht, ist dieses Repo der signierte Index samt Schlüssel und
+Werkzeug, nicht die Bezugsquelle.
+
 ## Install
 
 ```sh
