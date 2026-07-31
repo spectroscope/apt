@@ -20,13 +20,19 @@ custom domain are dashboard steps, so the address does not resolve today. The
 same indexes are already live over GitHub Pages at
 `https://spectroscope.github.io/apt`, which serves everything except the pool.
 
-## Der Stand, gemessen am 31.07.2026
+## Der Stand, gemessen am 31.07.2026 (abends)
 
-Die Indexe sind **live**: `https://spectroscope.github.io/apt` liefert
-`dists/stable/InRelease`, `Packages` und `spectroscope.asc`, und ein frischer
-debian-12-Container akzeptiert sie mit den zwei dokumentierten Zeilen -
-`apt update` endet mit Exit 0, ohne eine einzige Signatur-Warnung, und
-`apt-cache policy spectroscope` nennt `Candidate: 0.4.2~dev.4d46480`.
+**Das Repo ist scharf.** `https://apt.spectroscope.dev` liefert die Indexe, den
+Schlüssel und die Pool-Umleitung; die zwei dokumentierten Zeilen installieren in
+einem frischen Container `spectroscope 0.5.0`, auf Debian 12 (apt 2.6.1) und auf
+Ubuntu 24.04 (apt 2.8.3), jeweils mit Exit 0 und ohne eine Signatur-Warnung.
+`/usr/bin/spectroscope` liegt danach über update-alternatives auf dem PATH,
+`dpkg -V` schweigt, und `~/.spectro` überlebt ein `apt remove` unverändert.
+
+Im Pool liegt genau ein Paket: `spectroscope_0.5.0_amd64.deb`, 187306672 Bytes
+(178,63 MiB), sha256 `7f25fd52...df62f`, umgeleitet auf das Asset des
+v0.5.0-Releases. `amd64` ist die einzige ausgelieferte Architektur; für arm64
+nimmt apt die Quelle ohne Fehler auf und findet dann nichts.
 
 **Der Pool liegt nicht in diesem Repo, und er kann es auch nicht.** GitHub
 weist jede Datei über 100 MB ab (gemessen beim ersten Push: `GH001 ... is
@@ -46,7 +52,7 @@ Gebaut ist Weg 1 der beiden, die hier vorher zur Wahl standen:
 spectroscope.ai und spectroscope.dev — Assets first, kein Build-Schritt. Alles
 außer `pool/` geht unverändert aus der Assets-Bindung raus; das sind elf
 Dateien, die größte rund 17 KB (gemessen 31.07.2026). Ein Paket paßt da nicht
-hinein: der deb ist 187306536 Bytes, also 178,6 MiB, und ein statisches Asset
+hinein: der deb ist 187306672 Bytes, also 178,63 MiB, und ein statisches Asset
 darf bei Cloudflare **25 MiB** groß sein. Also beantwortet der Worker `pool/`
 selbst, mit einem **302 auf die URL, die die Bytes wirklich hält**.
 
@@ -67,14 +73,14 @@ gleicher Länge** ausliefert, wird abgewiesen:
 
 ```
 E: Failed to fetch ...  Hash Sum mismatch
- - SHA256:2fb23c69...  (erwartet, aus dem signierten Index)
+ - SHA256:7f25fd52...  (erwartet, aus dem signierten Index)
  - SHA256:d9d83680...  (empfangen)
 --- apt-get install exit=100 ---
 ```
 
 Nichts wurde ausgepackt, die Bytes landeten als `*.deb.FAILED` in Quarantäne.
 Eine falsche Größe fliegt noch früher auf (`File has unexpected size (38 !=
-187306536)`). Der Pool-Host ist damit von Bauart her unvertrauenswürdig: er
+187306672)`). Der Pool-Host ist damit von Bauart her unvertrauenswürdig: er
 kann eine Installation scheitern lassen, niemals eine stillschweigend
 verändern.
 
@@ -85,17 +91,18 @@ Download aber **direkt beim Ziel** wieder auf (`Range: bytes=40000000-`), nicht
 noch einmal über den Worker; der Pool-Host muß also direkt erreichbar sein und
 sollte ein stabiles `Last-Modified` liefern.
 
-**Der Entwicklungs-Build im Index hat noch kein öffentliches Asset.** Für
-`spectroscope_0.4.2-dev.4d46480_amd64.deb` steht deshalb kein Eintrag in
-`pool-map.json`, und der Worker antwortet ehrlich:
+**Was passiert, wenn eine Datei keinen Eintrag hat.** Der Worker rät nie eine
+URL. Ein Dateiname ohne Eintrag in `pool-map.json` bekommt einen 404, der ihn
+benennt:
 
 ```
-404  no pool entry for spectroscope_0.4.2-dev.4d46480_amd64.deb — see pool-map.json at the root of this repository
+404  no pool entry for <datei>.deb — see pool-map.json at the root of this repository
 ```
 
-Das bleibt so, bis der Owner die Datei an ein Release oder ein Prerelease
-hängt und ihre URL mit `scripts/update-repo.sh --url` einträgt. Ein geratener
-Link wäre kein Fortschritt, sondern derselbe 404 eine Ebene später.
+Das war bis zum 0.5.0-Release der reale Zustand des Repos: der Index trug einen
+Entwicklungs-Build, den kein Release auslieferte. Ein geratener Link wäre kein
+Fortschritt gewesen, sondern derselbe 404 eine Ebene später und mit falscher
+Schuldzuweisung. `scripts/update-repo.sh` verlangt deshalb `--url`.
 
 ## Install
 
@@ -150,33 +157,32 @@ pinned keyring in place.
 One package, amd64 only:
 
 ```
-pool/main/s/spectroscope/spectroscope_0.4.2-dev.4d46480_amd64.deb
-version  0.4.2~dev.4d46480
-size     187306536 bytes
-sha256   2fb23c69f06b950fb73b8740b874b87c4ef2d8bb886dae3a1be32e005c245a4f
+pool/main/s/spectroscope/spectroscope_0.5.0_amd64.deb
+version  0.5.0
+size     187306672 bytes
+sha256   7f25fd52c5a29ab8cc6e955f5b165ce9b2fa513aa9b8e086c6a88ab8234df62f
 ```
 
-**This is a development build, not a release.** It is the artifact of CI run
-30632819244, stamped with the commit it was built from (`4d46480`), and it went
-into the pool byte for byte: the sha256 above is the one the run recorded in
-its own `SHA256SUMS.linux`, the one measured on the file here, and the one in
-the signed index. Releases arrive as ordinary versions with no `~dev` segment.
+**This is the release build.** It is the artifact CI produced against the tag
+`v0.5.0`, and it went into the pool byte for byte: the sha256 above is the one
+the run recorded, the one measured on the file here, the one in the signed
+index, and the one apt checks after following the redirect. `pool-map.json`
+points it at the release asset it is served from.
 
-It sits in the local `pool/` (gitignored) and in the signed index, but it has
-no entry in `pool-map.json`, because no public URL serves it yet. See the
-section above for what the worker answers in the meantime.
-
-The `~` is what makes that version sort correctly. dpkg orders a `~` segment
-below the empty string, so the build sits between the last release and the one
-it is heading for:
+The pool held a development build before this one, `0.4.2~dev.4d46480`, and how
+it was versioned is worth keeping as a note, because every future dev build
+takes the same shape. A `~` segment sorts below the empty string in dpkg, so a
+build made past one release and before the next sits exactly between them:
 
 ```
 $ dpkg --compare-versions 0.4.1 lt 0.4.2~dev.4d46480     # true
 $ dpkg --compare-versions 0.4.2~dev.4d46480 lt 0.4.2     # true
 ```
 
-So `apt upgrade` replaces it with 0.4.2 the day 0.4.2 is pooled, and never the
-other way around.
+That is why a development build can never shadow a release: `apt upgrade`
+replaces it the day the real version is pooled, and never the other way
+around. The CI workflow stamps that form itself for any build that is not a
+tag, and asserts the ordering before the artifact leaves the runner.
 
 `dists/stable/main/binary-arm64/Packages` exists and is covered by the
 signature, but it is empty. There is no arm64 package yet.
@@ -191,7 +197,13 @@ are committed here.
 Two clean containers, each running the documented install lines verbatim, with
 only the URL pointed at a throwaway `python3 -m http.server` on this tree.
 `Debian GNU/Linux 12 (bookworm)` and `Ubuntu 24.04.4 LTS`, both amd64, with the
-same result:
+same result. The transcript below is the local run from 2026-07-31, made
+against the development build that was pooled at the time, served from a
+throwaway http server: it is kept verbatim because it is what was actually
+captured. The same two lines were run again the same evening against the live
+`apt.spectroscope.dev` on Debian 12 (apt 2.6.1) and Ubuntu 24.04 (apt 2.8.3),
+both ending at `Setting up spectroscope (0.5.0)`, exit 0, no signature
+warning, `dpkg -V` silent over 553 files.
 
 ```
 --- fingerprint apt is now pinned to ---
@@ -241,7 +253,8 @@ Two attempts, both refused.
 
 One flipped byte in the pooled deb, length preserved, indexes genuine. The
 index is untouched, so `apt update` succeeds. apt then prints the hash it
-expected from the signed index, the hash it actually received, and stops:
+expected from the signed index, the hash it actually received, and stops.
+Verbatim from the run that produced it, on the build pooled at the time:
 
 ```
 E: Failed to fetch .../spectroscope_0.4.2-dev.4d46480_amd64.deb  Hash Sum mismatch
