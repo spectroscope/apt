@@ -1,0 +1,4 @@
+{
+  "note": "Package filename -> the absolute URL that actually serves those bytes. src/worker.js looks up nothing else: a filename missing from this map is a 404 at the worker, never a guessed redirect. Maintained by scripts/update-repo.sh --url; do not hand-edit unless you are also moving the file.",
+  "packages": {}
+}

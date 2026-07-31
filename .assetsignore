@@ -1,0 +1,16 @@
+# Wrangler uploads every file under the assets directory, and this repo's
+# assets directory is its own root (see wrangler.jsonc). Same format as
+# .gitignore. Keep the machinery out of the served tree.
+#
+# pool/ matters most: it is gitignored, so a Workers Build never sees it, but
+# a local `npx wrangler deploy` from a working copy would try to upload a
+# 178.6 MiB deb and hit the 25 MiB per-file limit.
+pool
+.git
+.gitignore
+.assetsignore
+.DS_Store
+node_modules
+scripts
+src
+wrangler.jsonc

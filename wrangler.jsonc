@@ -1,0 +1,34 @@
+{
+  // apt.spectroscope.dev — the signed apt repository.
+  // Cloudflare Workers static assets, same shape as spectroscope-website and
+  // spectroscope-dev (no build step, no CI file, deploy command
+  // `npx wrangler deploy`), with two deliberate differences:
+  //
+  //   1. the assets directory is this repository's ROOT, not ./public.
+  //      GitHub Pages already serves this tree from the root, and both
+  //      documented client lines resolve dists/ relative to the base URL, so
+  //      moving the tree into public/ would move it out from under Pages too.
+  //      .assetsignore keeps src/, scripts/, pool/ and .git out of the upload.
+  //   2. the worker is NOT a pure pass-through. /pool/** is answered with a
+  //      302, because one deb is 178.6 MiB and a static asset may be 25 MiB.
+  //      Everything else still goes straight to the binding. See src/worker.js.
+  "name": "spectroscope-apt",
+  "compatibility_date": "2026-07-01",
+  "main": "src/worker.js",
+  // keep the workers.dev URL + preview URLs until the custom domain lands
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS"
+  }
+  // Custom domain apt.spectroscope.dev is NOT declared here, matching both
+  // sibling repos: neither carries a "routes" key, both were wired in the
+  // dashboard (Workers & Pages -> the worker -> Settings -> Domains & Routes
+  // -> Add -> Custom Domain). Cloudflare then creates the DNS record and
+  // issues the certificate itself; it refuses if a CNAME for that hostname
+  // already exists in the zone.
+  // To move that step into this file instead, add:
+  //   "routes": [{ "pattern": "apt.spectroscope.dev", "custom_domain": true }]
+  // and the first deploy creates the domain. Owner's call which precedent wins.
+}
