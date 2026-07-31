@@ -4,3 +4,9 @@
 *secret*
 *PRIVATE*
 .DS_Store
+
+# The pool cannot live in git: GitHub refuses any file over 100 MB (GH001,
+# measured on the 178 MB deb), and Pages does not resolve LFS pointers either.
+# The indexes, the key and the scripts are small and belong here; the packages
+# they describe need object storage or the release assets. See README.
+pool/
