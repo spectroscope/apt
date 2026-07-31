@@ -1,0 +1,18 @@
+# GPG batch recipe for the DEDICATED apt signing key.
+# Usage (inside a debian:12 container or anywhere with gnupg >= 2.2):
+#   export GNUPGHOME=/path/to/apt-key-home   # dedicated home, 0700
+#   gpg --batch --gen-key apt-signing-key.batch
+#   gpg --armor --export chris@spectroscope.ai > spectroscope.asc
+# ed25519, sign-only, no expiry. Mechanics verified against apt 2.6.1
+# (debian 12) and apt 2.8.x (ubuntu 24.04) on 2026-07-31: InRelease accepted,
+# tampered index rejected with "Hash Sum mismatch", wrong key -> NO_PUBKEY.
+# Dedicated key, NOT the Maven signing key: revoking one surface must never
+# break the other (card 135).
+%no-protection
+Key-Type: eddsa
+Key-Curve: ed25519
+Key-Usage: sign
+Name-Real: spectroscope apt
+Name-Email: chris@spectroscope.ai
+Expire-Date: 0
+%commit

@@ -1,0 +1,6 @@
+# never any key material in this repo — the signing key home lives outside
+# the tree (~/.spectroscope-apt-key)
+*.sec
+*secret*
+*PRIVATE*
+.DS_Store
