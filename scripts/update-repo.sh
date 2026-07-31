@@ -103,6 +103,12 @@ docker run --rm \
     apt-get update -qq >/dev/null
     apt-get install -y -qq dpkg-dev apt-utils gnupg jq >/dev/null 2>&1
     chmod 700 /gnupg
+    # A gpg run on the HOST against this key home leaves S.gpg-agent* sockets
+    # behind. Inside the container they point at an agent that does not exist,
+    # and gpg then reports no secret key at all - the refusal below fires on a
+    # key home that is perfectly fine. The sockets are runtime state, never
+    # key material, so dropping them is safe and they are recreated on demand.
+    rm -f /gnupg/S.gpg-agent*
     gpg --batch --list-secret-keys "$KEYID" >/dev/null 2>&1 \
       || { echo "refusing: no secret key for $KEYID in the key home" >&2; exit 1; }
     # key check passed — only now may the deb enter the pool
