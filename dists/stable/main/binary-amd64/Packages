@@ -18,3 +18,23 @@ Description: the agent orchestrator you can watch
 License: MIT
 Vendor: Christopher Ezell <chris@spectroscope.ai>
 
+Package: spectroscope
+Version: 0.5.0
+Architecture: amd64
+Maintainer: Christopher Ezell <chris@spectroscope.ai>
+Installed-Size: 546947
+Depends: libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0, libssl3 | libssl3t64
+Recommends: libappindicator3-1
+Filename: pool/main/s/spectroscope/spectroscope_0.5.0_amd64.deb
+Size: 187306672
+MD5sum: 29472a5ffe85152ab8e22174de06d79c
+SHA1: c5cf2e5d17b57733e5237f827723279d2d3c1c55
+SHA256: 7f25fd52c5a29ab8cc6e955f5b165ce9b2fa513aa9b8e086c6a88ab8234df62f
+Section: default
+Priority: optional
+Homepage: https://spectroscope.ai
+Description: the agent orchestrator you can watch
+  spectroscope Desktop — Electron shell: spawns and supervises the spectro-server JVM
+License: MIT
+Vendor: Christopher Ezell <chris@spectroscope.ai>
+
