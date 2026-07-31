@@ -37,6 +37,13 @@ for arch in $ARCHES; do
   gzip -9 -f -k "dists/$SUITE/main/binary-$arch/Packages"
 done
 
+# apt-ftparchive hashes every file it finds under dists/<suite>, INCLUDING a
+# Release left there by the previous run - the new index then carries a stanza
+# describing a file that no longer exists. apt ignores its own self-entry, so
+# clients are unaffected, but a signed index must not state a wrong hash about
+# anything. Remove the old one (and its signatures) before scanning.
+rm -f "dists/$SUITE/Release" "dists/$SUITE/InRelease" "dists/$SUITE/Release.gpg"
+
 apt-ftparchive \
   -o APT::FTPArchive::Release::Origin=spectroscope \
   -o APT::FTPArchive::Release::Label=spectroscope \
