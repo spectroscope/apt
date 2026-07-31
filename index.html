@@ -285,7 +285,8 @@
         <div class="step-body">
           <p>Fetch the public half of the signing key and store it as its own keyring.</p>
           <div class="snip">
-<pre><code>curl -fsSL https://apt.spectroscope.dev/spectroscope.asc | sudo gpg --dearmor -o /usr/share/keyrings/spectroscope.gpg</code></pre>
+<pre><code>curl -fsSL https://apt.spectroscope.dev/spectroscope.asc \
+  | sudo gpg --dearmor -o /usr/share/keyrings/spectroscope.gpg</code></pre>
             <button class="copy" type="button" aria-label="Copy this line">copy</button>
           </div>
         </div>
@@ -296,7 +297,8 @@
         <div class="step-body">
           <p>Add the source, bound to that keyring by <code>signed-by</code> and nothing else.</p>
           <div class="snip">
-<pre><code>echo "deb [signed-by=/usr/share/keyrings/spectroscope.gpg] https://apt.spectroscope.dev stable main" | sudo tee /etc/apt/sources.list.d/spectroscope.list</code></pre>
+<pre><code>echo "deb [signed-by=/usr/share/keyrings/spectroscope.gpg] https://apt.spectroscope.dev stable main" \
+  | sudo tee /etc/apt/sources.list.d/spectroscope.list</code></pre>
             <button class="copy" type="button" aria-label="Copy this line">copy</button>
           </div>
         </div>
@@ -401,7 +403,8 @@ E603 2682 4E65 D5CB 3116  02D7 9DF6 0ECC 1605 83D8</code></pre>
       </div>
       <p class="sec-note">read that fingerprint back off the key you just downloaded:</p>
       <div class="snip">
-<pre><code>curl -fsSL https://apt.spectroscope.dev/spectroscope.asc | gpg --show-keys --with-fingerprint</code></pre>
+<pre><code>curl -fsSL https://apt.spectroscope.dev/spectroscope.asc \
+  | gpg --show-keys --with-fingerprint</code></pre>
         <button class="copy" type="button" aria-label="Copy this command">copy</button>
       </div>
 
@@ -415,8 +418,10 @@ E603 2682 4E65 D5CB 3116  02D7 9DF6 0ECC 1605 83D8</code></pre>
       </p>
       <p class="sec-note">verify the index signature by hand, the same way the publish script does:</p>
       <div class="snip">
-<pre><code>curl -fsSL https://apt.spectroscope.dev/spectroscope.asc | gpg --dearmor &gt; /tmp/spectroscope.gpg
-curl -fsSL https://apt.spectroscope.dev/dists/stable/InRelease &gt; /tmp/InRelease
+<pre><code>curl -fsSL https://apt.spectroscope.dev/spectroscope.asc \
+  | gpg --dearmor &gt; /tmp/spectroscope.gpg
+curl -fsSL https://apt.spectroscope.dev/dists/stable/InRelease \
+  &gt; /tmp/InRelease
 gpgv --keyring /tmp/spectroscope.gpg /tmp/InRelease</code></pre>
         <button class="copy" type="button" aria-label="Copy these commands">copy</button>
       </div>
@@ -442,7 +447,8 @@ gpgv --keyring /tmp/spectroscope.gpg /tmp/InRelease</code></pre>
       </p>
       <p class="sec-note">see the redirect, then check the bytes it points at against the signed index:</p>
       <div class="snip">
-<pre><code>curl -sI https://apt.spectroscope.dev/pool/main/s/spectroscope/spectroscope_0.5.0_amd64.deb
+<pre><code>curl -sI \
+  https://apt.spectroscope.dev/pool/main/s/spectroscope/spectroscope_0.5.0_amd64.deb
 <span class="c"># 302, with the release asset in the location header</span>
 
 curl -fsSL https://apt.spectroscope.dev/dists/stable/main/binary-amd64/Packages | grep -E <span class="s">'^(Version|Size|SHA256):'</span>
