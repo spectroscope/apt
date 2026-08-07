@@ -3,6 +3,7 @@
   "packages": {
     "spectroscope_0.5.0_amd64.deb": "https://github.com/spectroscope/spectroscope/releases/download/v0.5.0/spectroscope_0.5.0_amd64.deb",
     "spectroscope_0.6.0_amd64.deb": "https://github.com/spectroscope/spectroscope/releases/download/v0.6.0/spectroscope_0.6.0_amd64.deb",
-    "spectroscope_0.6.1_amd64.deb": "https://github.com/spectroscope/spectroscope/releases/download/v0.6.1/spectroscope_0.6.1_amd64.deb"
+    "spectroscope_0.6.1_amd64.deb": "https://github.com/spectroscope/spectroscope/releases/download/v0.6.1/spectroscope_0.6.1_amd64.deb",
+    "spectroscope_0.7.0_amd64.deb": "https://github.com/spectroscope/spectroscope/releases/download/v0.7.0/spectroscope_0.7.0_amd64.deb"
   }
 }
