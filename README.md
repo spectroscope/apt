@@ -125,6 +125,32 @@ sudo apt update
 sudo apt install spectroscope
 ```
 
+That last line waits for you twice, and in a container nobody answers either
+time. apt asks you to confirm the download first, and on a machine where
+`tzdata` has never been configured a package several levels down the chain then
+asks which timezone you live in. Neither question times out. Stuck at the first
+one, nothing has been downloaded; stuck at the second, spectroscope is unpacked
+and never configured. Where nobody is at the keyboard, use this instead:
+
+```sh
+sudo DEBIAN_FRONTEND=noninteractive apt install -y spectroscope
+```
+
+`-y` answers apt's own confirmation and `DEBIAN_FRONTEND=noninteractive`
+answers the timezone question, which then settles on `Etc/UTC` without telling
+you. That is the right trade in a container and the wrong one on a machine you
+are setting up by hand, which is why it stands next to the documented line
+rather than replacing it.
+
+Only the Ubuntu half of that pair is affected. Debian 12 ships `tzdata` already
+configured, and its `systemd` does not recommend the Python network dispatcher
+that drags `tzdata` in on Ubuntu. A full Ubuntu server or desktop install is
+fine as well, because `tzdata` is priority-important and configured long before
+this repository is added. Minimal container images and chroots are the ones
+that strip it. Measured 2026-08-03 on `ubuntu:24.04` amd64 against this live
+repository: the unattended line reaches `Setting up spectroscope` in 2m 01s with
+zero prompts and zero half-configured packages.
+
 `signed-by` binds that one keyring to this one source. There is no
 `trusted=yes` and no allow-insecure switch in this repo or in the lines above:
 apt checks the `InRelease` signature against the pinned key, and every package

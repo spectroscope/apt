@@ -316,6 +316,39 @@ sudo apt install spectroscope</code></pre>
         </div>
       </div>
 
+      <div class="note">
+        <strong>Nobody at the keyboard? Use this line instead.</strong> The
+        install line above waits for you twice, and in a container neither
+        question is answered. apt asks you to confirm the download first, and on
+        a machine where <code>tzdata</code> has never been configured a package
+        several levels down the chain then asks which timezone you live in.
+        Neither one times out: stuck at the first, nothing has been downloaded;
+        stuck at the second, spectroscope is unpacked and never configured.
+        <div class="snip">
+<pre><code>sudo DEBIAN_FRONTEND=noninteractive apt install -y spectroscope</code></pre>
+          <button class="copy" type="button" aria-label="Copy this line">copy</button>
+        </div>
+        <code>-y</code> answers apt's own confirmation and
+        <code>DEBIAN_FRONTEND=noninteractive</code> answers the timezone
+        question, which then settles on <code>Etc/UTC</code> without telling
+        you. That is the right trade in a container and the wrong one on a
+        machine you are setting up by hand, so it stands next to the three lines
+        rather than replacing them. Only the Ubuntu half is affected: Debian 12
+        ships <code>tzdata</code> already configured, and its
+        <code>systemd</code> does not recommend the Python network dispatcher
+        that drags <code>tzdata</code> in on Ubuntu. A full Ubuntu server or
+        desktop install is fine too, because <code>tzdata</code> is
+        priority-important and configured long before this repository is added.
+        Minimal container images and chroots are the ones that strip it.
+      </div>
+
+      <p class="sec-note">
+        measured 2026-08-03 on ubuntu 24.04 amd64 against this live repository:<br>
+        the unattended line reaches <code>Setting up spectroscope</code> in
+        2m 01s, with zero prompts, zero half-configured packages and
+        <code>/etc/timezone</code> left at <code>Etc/UTC</code>
+      </p>
+
       <p class="sec-note">
         measured 2026-07-31 on debian 12 (bookworm, apt 2.6.1) and ubuntu 24.04.4 LTS,
         both amd64:<br>
