@@ -17,7 +17,31 @@ this tree through the assets binding and answers `pool/` with a redirect, and it
 is live. The same indexes are also served over GitHub Pages at
 `https://spectroscope.github.io/apt`, which carries everything except the pool.
 
-## Status, measured 2026-07-31
+## Status, measured 2026-09-02
+
+**The repository is live and carries 0.12.0.** Measured today from a clean
+Debian 12 container over `scripts/verify-client.sh`, which installs from this
+tree, removes again, and then feeds apt a tampered `Packages.gz` as a negative
+control: install exit 0 with no signature warning, `/opt/spectroscope/spectroscope`
+gone after `apt-get remove`, `~/.spectro` unchanged across the removal, and the
+tamper detected. `gpgv` verifies `Release.gpg` and `InRelease` against the served
+public key.
+
+The pool now holds `spectroscope_0.12.0_amd64.deb`, 201076312 bytes
+(191.76 MiB), installed size 581188 KiB, sha256
+`c3536dfb32cffd30eedd5a028ebc090699f2541cad12d1fe3a525691ad272496`, redirected to the asset of the
+v0.12.0 release. `amd64` is still the only architecture shipped.
+
+The versions the index offers: 0.5.0, 0.6.0, 0.6.1, 0.7.0, 0.11.0, 0.12.0 —
+0.8.0, 0.9.0 and 0.10.0 never reached this channel, and the gap is visible in
+`dists/stable/main/binary-amd64/Packages` rather than hidden.
+
+## Status, as measured on 2026-07-31 — a snapshot, not the present
+
+Everything in this section describes the 0.5.0 era and is kept because its
+numbers were really measured then. Renumbering a version beside a checksum
+nobody re-ran would fabricate the checksum, so the section is dated instead.
+
 
 **The repository is live.** `https://apt.spectroscope.dev` serves the indexes,
 the key and the pool redirect. The documented install lines bring
